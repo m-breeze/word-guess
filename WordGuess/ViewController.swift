@@ -19,8 +19,13 @@ class ViewController: UIViewController {
 	var activatedButtons = [UIButton]()
 	var solutions = [String]()
 	
-	var score = 0
+	var score = 0 {
+		didSet {
+			scoreLabel.text = "Score: \(score)"
+		}
+	}
 	var level = 1
+	var correctAnswer = 0
 	
 	override func loadView() {
 		view = UIView()
@@ -115,6 +120,10 @@ class ViewController: UIViewController {
 				letterButton.titleLabel?.font = UIFont.systemFont(ofSize: 36)
 				letterButton.setTitle("WWW", for: .normal)
 				
+				letterButton.layer.borderWidth = 0.3
+				letterButton.layer.borderColor = UIColor.lightGray.cgColor
+                
+				// calculate the frame of the button using its column and row
 				let frame = CGRect(x: col * width, y: row * height, width: width, height: height)
 				letterButton.frame = frame
 				
@@ -132,15 +141,43 @@ class ViewController: UIViewController {
 	}
 	
 	@objc func letterTapped(_ sender:UIButton) {
-		
+		guard let buttonTitle = sender.titleLabel?.text else {return}
+		currentAnswer.text = currentAnswer.text?.appending(buttonTitle)
+		activatedButtons.append(sender)
+		sender.isHidden = true
 	}
-
+	
 	@objc func submitTapped(_ sender: UIButton) {
+		guard let answerText = currentAnswer.text else {return}
 		
+		if let solutionPosition = solutions.firstIndex(of: answerText) {
+			activatedButtons.removeAll()
+			
+			var splitAnswers = answersLabel.text?.components(separatedBy: "\n")
+			splitAnswers?[solutionPosition] = answerText
+			answersLabel.text = splitAnswers?.joined(separator: "\n")
+			currentAnswer.text = ""
+			score += 1
+			correctAnswer += 1
+
+			if correctAnswer % 7 == 0 {
+				nextLevel()
+			}
+		} else {
+			showError()
+			clearTapped(sender)
+			score -= 1
+		}
 	}
 	
 	@objc func clearTapped(_ sender: UIButton) {
+		//remove the text from the current answer text field
+		currentAnswer.text = ""
 		
+		for btn in activatedButtons {
+			btn.isHidden = false
+		}
+		activatedButtons.removeAll()
 	}
 	
 	func loadLevel() {
@@ -179,6 +216,29 @@ class ViewController: UIViewController {
 				letterButtons[i].setTitle(letterBits[i], for: .normal)
 			}
 		}
+	}
+	
+	func levelUp(action: UIAlertAction) {
+		level += 1
+		solutions.removeAll(keepingCapacity: true)
+		
+		loadLevel()
+		
+		for btn in letterButtons {
+			btn.isHidden = false
+		}
+	}
+	
+	func showError() {
+		let ac = UIAlertController(title: "You are not right!", message: "Try another word.", preferredStyle: .alert)
+		ac.addAction(UIAlertAction(title: "Continue", style: .default))
+		present(ac, animated: true)
+	}
+	
+	func nextLevel() {
+		let ac = UIAlertController(title: "Well done!", message: "Are you ready for the next level?", preferredStyle: .alert)
+		ac.addAction(UIAlertAction(title: "Let's go!", style: .default, handler: levelUp))
+		present(ac, animated:  true)
 	}
 }
 
