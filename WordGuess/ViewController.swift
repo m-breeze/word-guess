@@ -181,11 +181,10 @@ class ViewController: UIViewController {
 	}
 	
 	func loadLevel() {
+		DispatchQueue.global(qos: .userInitiated).async {
 		var clueString = ""
 		var solutionString = ""
 		var letterBits = [String]()
-		
-		DispatchQueue.global(qos: .userInitiated).async {
 			if let levelFileURL = Bundle.main.url(forResource: "level\(self.level)", withExtension: "txt") {
 				if let levelContents = try? String(contentsOf: levelFileURL) {
 					var lines = levelContents.components(separatedBy: "\n")
@@ -206,17 +205,17 @@ class ViewController: UIViewController {
 					}
 				}
 			}
-		}
-		DispatchQueue.main.async {
-			// Now configure the buttons and labels
-			self.cluesLabel.text = clueString.trimmingCharacters(in: .whitespacesAndNewlines)
-			self.answersLabel.text = solutionString.trimmingCharacters(in: .whitespacesAndNewlines)
-			
-			letterBits.shuffle()
-			
-			if letterBits.count == self.letterButtons.count {
-				for i in 0 ..< self.letterButtons.count {
-					self.letterButtons[i].setTitle(letterBits[i], for: .normal)
+			DispatchQueue.main.async {
+				// Now configure the buttons and labels
+				self.cluesLabel.text = clueString.trimmingCharacters(in: .whitespacesAndNewlines)
+				self.answersLabel.text = solutionString.trimmingCharacters(in: .whitespacesAndNewlines)
+				
+				letterBits.shuffle()
+				
+				if letterBits.count == self.letterButtons.count {
+					for i in 0 ..< self.letterButtons.count {
+						self.letterButtons[i].setTitle(letterBits[i], for: .normal)
+					}
 				}
 			}
 		}
